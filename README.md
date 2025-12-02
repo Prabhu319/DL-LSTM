@@ -10,31 +10,23 @@ To develop an LSTM-based model for recognizing the named entities in the text.
 Include the neural network model diagram.
 
 ## DESIGN STEPS
-### STEP 1: 
+### STEP 1: Data Collection and Preprocessing
+Load text data with named entity annotations. Tokenize the text using a pre-trained tokenizer, convert tokens to input IDs, and create attention masks. Align labels with subword tokens.
 
-Write your own steps
+### STEP 2: Prepare Dataset and DataLoader
+Split data into training (80%) and testing (20%) sets. Create PyTorch DataLoader with appropriate batch sizes for efficient mini-batch processing.
 
-### STEP 2: 
+### STEP 3: Design the BiLSTM-NER Architecture
+Build a model with embedding layer, bidirectional LSTM layers for sequence processing, dropout for regularization, and a linear output layer with softmax for entity classification.
 
+### STEP 4: Compile and Configure the Model
+Define the loss function (CrossEntropyLoss for multi-class classification), optimizer (Adam), and evaluation metrics (precision, recall, F1-score).
 
+### STEP 5: Train the Model
+Train the BiLSTM model for multiple epochs, compute loss on training batches, perform backpropagation, and update model weights. Monitor validation loss to detect overfitting.
 
-### STEP 3: 
-
-
-
-### STEP 4: 
-
-
-
-### STEP 5: 
-
-
-
-### STEP 6: 
-
-
-
-
+### STEP 6: Evaluate and Predict
+Test the model on unseen data, generate entity predictions for sample texts, calculate performance metrics (accuracy, F1-score), and visualize predictions with entity labels.
 
 ## PROGRAM
 
