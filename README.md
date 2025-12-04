@@ -4,35 +4,41 @@
 To develop an LSTM-based model for recognizing the named entities in the text.
 
 ## THEORY
-
-
 ## Neural Network Model
 Include the neural network model diagram.
 
 ## DESIGN STEPS
-### STEP 1: Data Collection and Preprocessing
-Load text data with named entity annotations. Tokenize the text using a pre-trained tokenizer, convert tokens to input IDs, and create attention masks. Align labels with subword tokens.
+### STEP 1: 
 
-### STEP 2: Prepare Dataset and DataLoader
-Split data into training (80%) and testing (20%) sets. Create PyTorch DataLoader with appropriate batch sizes for efficient mini-batch processing.
+Load data, create word/tag mappings, and group sentences.
 
-### STEP 3: Design the BiLSTM-NER Architecture
-Build a model with embedding layer, bidirectional LSTM layers for sequence processing, dropout for regularization, and a linear output layer with softmax for entity classification.
+### STEP 2: 
 
-### STEP 4: Compile and Configure the Model
-Define the loss function (CrossEntropyLoss for multi-class classification), optimizer (Adam), and evaluation metrics (precision, recall, F1-score).
+Convert sentences to index sequences, pad to fixed length, and split into training/testing sets.
 
-### STEP 5: Train the Model
-Train the BiLSTM model for multiple epochs, compute loss on training batches, perform backpropagation, and update model weights. Monitor validation loss to detect overfitting.
+### STEP 3: 
 
-### STEP 6: Evaluate and Predict
-Test the model on unseen data, generate entity predictions for sample texts, calculate performance metrics (accuracy, F1-score), and visualize predictions with entity labels.
+Define dataset and DataLoader for batching.
+
+### STEP 4: 
+
+Build a bidirectional LSTM model for sequence tagging.
+
+### STEP 5: 
+
+Train the model over multiple epochs, tracking loss.
+
+### STEP 6: 
+
+Evaluate model accuracy, plot loss curves, and visualize predictions on a sample.
+
+
 
 ## PROGRAM
 
-### Name: PRABANJAN.M
+### Name: prabanjan m
 
-### Register Number:212224240116
+### Register Number: 212224240116
 
 ```python
 import pandas as pd
@@ -55,6 +61,7 @@ print(f"Using device: {device}")
 data = pd.read_csv("ner_dataset.csv", encoding="latin1").ffill()
 words = list(data["Word"].unique())
 tags = list(data["Tag"].unique())
+data.head()
 
 if "ENDPAD" not in words:
     words.append("ENDPAD")
@@ -65,22 +72,8 @@ idx2tag = {i: t for t, i in tag2idx.items()}
 
 data.head(50)
 
-Essential info about tagged entities:
-```
-geo = Geographical Entity
-org = Organization
-per = Person
-gpe = Geopolitical Entity
-tim = Time indicator
-art = Artifact
-eve = Event
-nat = Natural Phenomenon
-```
-
 print("Unique words in corpus:", data['Word'].nunique())
 print("Unique tags in corpus:", data['Tag'].nunique())
-
-print("Unique tags are:", tags)
 
 # Group words by sentences
 class SentenceGetter:
@@ -92,10 +85,6 @@ class SentenceGetter:
 
 getter = SentenceGetter(data)
 sentences = getter.sentences
-
-
-sentences[35]
-
 word2idx
 
 plt.hist([len(s) for s in sentences], bins=50)
@@ -115,6 +104,7 @@ y_pad[0]
 # Train/test split
 X_train, X_test, y_train, y_test = train_test_split(X_pad, y_pad, test_size=0.2, random_state=1)
 
+
 # Dataset class
 class NERDataset(Dataset):
     def __init__(self, X, y):
@@ -133,62 +123,53 @@ class NERDataset(Dataset):
 train_loader = DataLoader(NERDataset(X_train, y_train), batch_size=32, shuffle=True)
 test_loader = DataLoader(NERDataset(X_test, y_test), batch_size=32)
 
-
-# Model definition
 class BiLSTMTagger(nn.Module):
-    # Include your code here
-    def __init__(self, vocab_size, embedding_dim, hidden_dim, tagset_size):
+    def __init__(self, vocab_size, tagset_size, embedding_dim=50, hidden_dim=100):
         super(BiLSTMTagger, self).__init__()
         self.embedding = nn.Embedding(vocab_size, embedding_dim)
-        self.lstm = nn.LSTM(embedding_dim, hidden_dim // 2, num_layers=1, bidirectional=True, batch_first=True)
-        self.dropout = nn.Dropout(0.2)
-        self.fc = nn.Linear(hidden_dim, tagset_size)
-    def forward(self, input_ids):
-        # Include your code here
-        x = input_ids  # Assign input_ids to x
+        self.dropout = nn.Dropout(0.1)
+        self.lstm = nn.LSTM(embedding_dim, hidden_dim, batch_first=True, bidirectional=True)
+        self.fc = nn.Linear(hidden_dim * 2, tagset_size)
+
+    def forward(self, x):
         x = self.embedding(x)
         x = self.dropout(x)
         x, _ = self.lstm(x)
         return self.fc(x)
 
-model = BiLSTMTagger(len(word2idx) + 1, 128, 256, len(tag2idx)).to(device)
+
+model=BiLSTMTagger(len(word2idx)+1, len(tag2idx)).to(device)
 loss_fn = nn.CrossEntropyLoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 
+
 # Training and Evaluation Functions
 def train_model(model, train_loader, test_loader, loss_fn, optimizer, epochs=3):
-    # Include the training and evaluation functions
-    train_losses, val_losses = [], []
+    train_losses,val_losses=[],[]
     for epoch in range(epochs):
-        model.train()
-        total_loss = 0
-        for batch in train_loader:
-            input_ids = batch["input_ids"].to(device)
-            labels = batch["labels"].to(device)
-            optimizer.zero_grad()
-            outputs = model(input_ids)
-            loss = loss_fn(outputs.view(-1, outputs.shape[-1]), labels.view(-1))
-            loss.backward()
-            optimizer.step()
-            total_loss += loss.item()
-        train_losses.append(total_loss)
-
-        model.eval()
-        val_lOSS = 0
-        with torch.no_grad():
-            for batch in test_loader:
-                input_ids = batch["input_ids"].to(device)
-                labels = batch["labels"].to(device)
-                outputs = model(input_ids)
-                loss = loss_fn(outputs.view(-1, outputs.shape[-1]), labels.view(-1))
-                val_lOSS += loss.item()
-        val_losses.append(val_lOSS)
-        print(f"Epoch {epoch + 1}/{epochs}, Train Loss: {total_loss}, Val Loss: {val_lOSS}")
-
-        return train_losses, val_losses
-
-
-
+      model.train()
+      total_loss=0
+      for batch in train_loader:
+        input_ids=batch["input_ids"].to(device)
+        labels=batch["labels"].to(device)
+        optimizer.zero_grad()
+        outputs=model(input_ids)
+        loss=loss_fn(outputs.view(-1,len(tag2idx)),labels.view(-1))
+        loss.backward()
+        optimizer.step()
+        total_loss+=loss.item()
+      train_losses.append(total_loss)
+      model.eval()
+      val_loss=0
+      with torch.no_grad():
+        for batch in test_loader:
+          input_ids=batch["input_ids"].to(device)
+          labels=batch["labels"].to(device)
+          outputs=model(input_ids)
+          loss=loss_fn(outputs.view(-1,len(tag2idx)),labels.view(-1))
+          val_loss+=loss.item()
+      val_losses.append(val_loss)
+      print(f"Epoch {epoch+1}: Train Loss={total_loss:.4f},Val Loss={val_loss:.4f}")
 
     return train_losses, val_losses
 
@@ -207,14 +188,11 @@ def evaluate_model(model, test_loader, X_test, y_test):
                         true_tags.append(idx2tag[labels[i][j].item()])
                         pred_tags.append(idx2tag[preds[i][j].item()])
 
-
 # Run training and evaluation
 train_losses, val_losses = train_model(model, train_loader, test_loader, loss_fn, optimizer, epochs=3)
 evaluate_model(model, test_loader, X_test, y_test)
 
 # Plot loss
-print('Name:prabanjan . m')
-print('Register Number: 212224240116')
 history_df = pd.DataFrame({"loss": train_losses, "val_loss": val_losses})
 history_df.plot(title="Loss Over Epochs")
 plt.xlabel("Epoch")
@@ -230,8 +208,6 @@ output = model(sample)
 preds = torch.argmax(output, dim=-1).squeeze().cpu().numpy()
 true = y_test[i].numpy()
 
-print('Name:Prabanjan.m')
-print('Register Number:212224240116')
 print("{:<15} {:<10} {}\n{}".format("Word", "True", "Pred", "-" * 40))
 for w_id, true_tag, pred_tag in zip(X_test[i], y_test[i], preds):
     if w_id.item() != word2idx["ENDPAD"]:
@@ -239,17 +215,20 @@ for w_id, true_tag, pred_tag in zip(X_test[i], y_test[i], preds):
         true_label = tags[true_tag.item()]
         pred_label = tags[pred_tag]
         print(f"{word:<15} {true_label:<10} {pred_label}")
-
 ```
 
 ### OUTPUT
 
 ## Loss Vs Epoch Plot
 
-Include your plot here
+<img width="1047" height="695" alt="image" src="https://github.com/user-attachments/assets/b8a18094-307f-4f01-a58f-603749f8b63e" />
+
 
 ### Sample Text Prediction
-Include your sample text prediction here
+
+<img width="450" height="590" alt="image" src="https://github.com/user-attachments/assets/f9f5ebe2-c37e-48c0-be06-c2078d78387b" />
+
 
 ## RESULT
-Include your result here
+
+Thus, an LSTM-based model for recognizing the named entities in the text has been developed successfully.
