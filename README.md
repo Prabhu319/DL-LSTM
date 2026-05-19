@@ -3,9 +3,22 @@
 ## AIM
 To develop an LSTM-based model for recognizing the named entities in the text.
 
-## THEORY
-## Neural Network Model
-Include the neural network model diagram.
+## Problem Statement and Dataset
+An organization needs to extract important information such as names of people, locations, organizations, and other entities from large amounts of unstructured text data. Manually identifying these named entities is time-consuming and inefficient.
+
+To automate this process, a model based on Long Short-Term Memory (LSTM) networks will be developed. LSTM is a type of recurrent neural network that is capable of capturing long-term dependencies in sequential data, making it suitable for natural language processing tasks.
+
+The model will be trained on labeled text data where each word is tagged with its corresponding entity type. By learning the context and relationships between words in a sentence, the model can accurately identify and classify named entities.
+
+After training, the model will be tested on new, unseen text to evaluate its performance in recognizing entities. The objective is to achieve high accuracy in extracting relevant information from text data efficiently.
+
+Named Entity Recognition (NER) is a key task in Natural Language Processing where entities such as names, locations, and organizations are identified from text. The objective of this project is to develop an LSTM-based model to recognize named entities in the given text by capturing sequential patterns, and to evaluate its performance using appropriate metrics such as precision, recall, and F1-score.
+
+
+
+
+<img width="1441" height="856" alt="image" src="https://github.com/user-attachments/assets/784b9500-e350-4739-9440-ebbe88a7c078" />
+
 
 ## DESIGN STEPS
 ### STEP 1: 
@@ -33,10 +46,9 @@ Train the model over multiple epochs, tracking loss.
 Evaluate model accuracy, plot loss curves, and visualize predictions on a sample.
 
 
-
 ## PROGRAM
 
-### Name: prabanjan m
+### Name: PRABANJAN M
 
 ### Register Number: 212224240116
 
@@ -61,7 +73,6 @@ print(f"Using device: {device}")
 data = pd.read_csv("ner_dataset.csv", encoding="latin1").ffill()
 words = list(data["Word"].unique())
 tags = list(data["Tag"].unique())
-data.head()
 
 if "ENDPAD" not in words:
     words.append("ENDPAD")
@@ -75,6 +86,8 @@ data.head(50)
 print("Unique words in corpus:", data['Word'].nunique())
 print("Unique tags in corpus:", data['Tag'].nunique())
 
+print("Unique tags are:", tags)
+
 # Group words by sentences
 class SentenceGetter:
     def __init__(self, data):
@@ -85,6 +98,13 @@ class SentenceGetter:
 
 getter = SentenceGetter(data)
 sentences = getter.sentences
+
+sentences[35]
+
+# Encode sentences
+X = [[word2idx[w] for w, t in s] for s in sentences]
+y = [[tag2idx[t] for w, t in s] for s in sentences]
+
 word2idx
 
 plt.hist([len(s) for s in sentences], bins=50)
@@ -104,7 +124,6 @@ y_pad[0]
 # Train/test split
 X_train, X_test, y_train, y_test = train_test_split(X_pad, y_pad, test_size=0.2, random_state=1)
 
-
 # Dataset class
 class NERDataset(Dataset):
     def __init__(self, X, y):
@@ -123,6 +142,8 @@ class NERDataset(Dataset):
 train_loader = DataLoader(NERDataset(X_train, y_train), batch_size=32, shuffle=True)
 test_loader = DataLoader(NERDataset(X_test, y_test), batch_size=32)
 
+
+# Model definition
 class BiLSTMTagger(nn.Module):
     def __init__(self, vocab_size, tagset_size, embedding_dim=50, hidden_dim=100):
         super(BiLSTMTagger, self).__init__()
@@ -134,14 +155,12 @@ class BiLSTMTagger(nn.Module):
     def forward(self, x):
         x = self.embedding(x)
         x = self.dropout(x)
-        x, _ = self.lstm(x)
+        x,_= self.lstm(x)
         return self.fc(x)
-
 
 model=BiLSTMTagger(len(word2idx)+1, len(tag2idx)).to(device)
 loss_fn = nn.CrossEntropyLoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
-
 
 # Training and Evaluation Functions
 def train_model(model, train_loader, test_loader, loss_fn, optimizer, epochs=3):
@@ -193,6 +212,8 @@ train_losses, val_losses = train_model(model, train_loader, test_loader, loss_fn
 evaluate_model(model, test_loader, X_test, y_test)
 
 # Plot loss
+print('Name:PRABANJAN M')
+print('Register Number:212224240116')
 history_df = pd.DataFrame({"loss": train_losses, "val_loss": val_losses})
 history_df.plot(title="Loss Over Epochs")
 plt.xlabel("Epoch")
@@ -208,6 +229,8 @@ output = model(sample)
 preds = torch.argmax(output, dim=-1).squeeze().cpu().numpy()
 true = y_test[i].numpy()
 
+print('Name:PRABANJAN M')
+print('Register Number:212224240116')
 print("{:<15} {:<10} {}\n{}".format("Word", "True", "Pred", "-" * 40))
 for w_id, true_tag, pred_tag in zip(X_test[i], y_test[i], preds):
     if w_id.item() != word2idx["ENDPAD"]:
@@ -215,20 +238,26 @@ for w_id, true_tag, pred_tag in zip(X_test[i], y_test[i], preds):
         true_label = tags[true_tag.item()]
         pred_label = tags[pred_tag]
         print(f"{word:<15} {true_label:<10} {pred_label}")
+
 ```
 
 ### OUTPUT
 
 ## Loss Vs Epoch Plot
+<img width="1093" height="702" alt="Screenshot 2026-05-19 091606" src="https://github.com/user-attachments/assets/53f000ea-1678-46c6-a214-200303936816" />
+<img width="1009" height="407" alt="Screenshot 2026-05-19 091611" src="https://github.com/user-attachments/assets/612f0b91-669d-4dcf-b6e6-a5b6a3f9bd1d" />
 
-<img width="1047" height="695" alt="image" src="https://github.com/user-attachments/assets/b8a18094-307f-4f01-a58f-603749f8b63e" />
+
 
 
 ### Sample Text Prediction
+<img width="811" height="594" alt="Screenshot 2026-05-19 091748" src="https://github.com/user-attachments/assets/dcd11889-265d-4e3f-85f5-d1acacb2ccfd" />
+<img width="609" height="269" alt="Screenshot 2026-05-19 091623" src="https://github.com/user-attachments/assets/a7dc420f-73ec-48d1-b6dd-d11b6beaefae" />
 
-<img width="450" height="590" alt="image" src="https://github.com/user-attachments/assets/f9f5ebe2-c37e-48c0-be06-c2078d78387b" />
+
 
 
 ## RESULT
-
 Thus, an LSTM-based model for recognizing the named entities in the text has been developed successfully.
+
+
